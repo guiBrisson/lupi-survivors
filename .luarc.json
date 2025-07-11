@@ -1,0 +1,6 @@
+{
+  "diagnostics.globals": ["love"],
+    "diagnostics.disable": [
+        "undefined-doc-name"
+    ]
+}
