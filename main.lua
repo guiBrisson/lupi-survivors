@@ -2,7 +2,8 @@ local Player = require 'src.entities.Player'
 local EnemyManager = require 'src.system.EnemyManager'
 
 local player = Player:new()
-local enemyManager = EnemyManager:new(player.position)
+local enemyManager = EnemyManager:new()
+enemyManager:setTargetPosition(player.position)
 
 function love.load()
     player:load()
