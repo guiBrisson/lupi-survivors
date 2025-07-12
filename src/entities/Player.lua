@@ -28,7 +28,7 @@ function Player:load()
         end,
     })
 
-    -- sm:add_state(STATE_DEAD)
+    self.sm:add_state(STATE_DEAD)
 
     -- Set initial state
     self.sm:change_state(STATE_ALIVE)
@@ -63,7 +63,8 @@ end
 function Player:__tostring()
     return "Player(" ..
         "position: " .. tostring(self.position) .. ", " ..
-        "movement: " .. tostring(self.movement) ..
+        "movement: " .. tostring(self.movement) .. ", " ..
+        "health: " .. tostring(self.health) ..
         ")"
 end
 
