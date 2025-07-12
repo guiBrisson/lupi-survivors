@@ -2,6 +2,7 @@ local StateMachine = require 'src.components.StateMachine'
 local Position = require 'src.components.Position'
 local Movement = require 'src.components.Movement'
 local Control = require 'src.components.Control'
+local Health = require 'src.components.Health'
 
 local Player = {}
 Player.__index = Player
@@ -16,6 +17,7 @@ function Player:new()
     instance.position = Position:new(0, 0)
     instance.movement = Movement:new(150)
     instance.control = Control:new()
+    instance.health = Health:new(100)
     return instance
 end
 
@@ -44,7 +46,11 @@ end
 
 function Player:_handle_state(dt)
     self.sm:update(dt)
-    -- TODO: handle states
+
+
+    if self.health:get() <= 0 then
+        self.sm.change_state(STATE_DEAD)
+    end
 end
 
 function Player:_handle_movement(dt)
