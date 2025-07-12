@@ -1,43 +1,39 @@
 local StateMachine = require 'src.components.StateMachine'
-local Position = require 'src.components.Position'
-local Movement = require 'src.components.Movement'
-local Control = require 'src.components.Control'
-local Health = require 'src.components.Health'
+local Position     = require 'src.components.Position'
+local Movement     = require 'src.components.Movement'
+local Control      = require 'src.components.Control'
+local Health       = require 'src.components.Health'
+local Collider     = require 'src.components.Collider'
 
-local Player = {}
-Player.__index = Player
+local Player       = {}
+Player.__index     = Player
 
-local STATE_ALIVE = "alive"
-local STATE_DEAD = "dead"
+local STATE_ALIVE  = "alive"
+local STATE_DEAD   = "dead"
 
-function Player:new()
+function Player:new(world)
     local instance = setmetatable({}, self)
 
     instance.sm = StateMachine:new()
+    instance.size = 50
     instance.position = Position:new(0, 0)
     instance.movement = Movement:new(150)
     instance.control = Control:new()
     instance.health = Health:new(100)
+    instance.collider = Collider:new(world, 0, 0, 'dynamic', instance.size, self)
+    instance.collider:setFixedRotation(true)
     return instance
 end
 
 function Player:load()
-    self.sm:add_state(STATE_ALIVE, {
-        update = function(dt)
-            self:_handle_movement(dt)
-        end,
-    })
-
-    self.sm:add_state(STATE_DEAD)
-
-    -- Set initial state
-    self.sm:change_state(STATE_ALIVE)
+    self:_load_states()
 end
 
 function Player:draw()
     local x, y = self.position:get()
     love.graphics.setColor(0, 1, 0)
-    love.graphics.rectangle('fill', x, y, 50, 50)
+    love.graphics.rectangle('fill', x - self.size / 2, y - self.size / 2, self.size, self.size)
+    self.collider:draw()
 end
 
 function Player:update(dt)
@@ -53,11 +49,25 @@ function Player:_handle_state(dt)
     end
 end
 
+function Player:_load_states()
+    self.sm:add_state(STATE_ALIVE, {
+        update = function(dt)
+            self:_handle_movement(dt)
+        end,
+    })
+
+    self.sm:add_state(STATE_DEAD)
+
+    -- Set initial state
+    self.sm:change_state(STATE_ALIVE)
+end
+
 function Player:_handle_movement(dt)
     local directionX, directionY = self.control:update(dt)
     local x, y = self.position:get()
     local newX, newY = self.movement:move(dt, x, y, directionX, directionY)
     self.position:set(newX, newY)
+    self.collider:setPosition(newX, newY)
 end
 
 function Player:__tostring()

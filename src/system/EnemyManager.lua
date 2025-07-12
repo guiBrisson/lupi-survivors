@@ -10,11 +10,11 @@ function EnemyManager:new()
     return instance
 end
 
-function EnemyManager:load()
+function EnemyManager:load(world)
     for i = 1, 10 do
         local x = math.random(0, love.graphics.getWidth())
         local y = math.random(0, love.graphics.getHeight())
-        local enemy = Enemy:new({ x = x, y = y })
+        local enemy = Enemy:new(world, { x = x, y = y })
         self:_addEnemy(enemy)
         enemy:load()
     end
