@@ -1,14 +1,26 @@
-local Player = require 'src.entities.Player'
-local EnemyManager = require 'src.system.EnemyManager'
-local Camera = require 'src.components.Camera'
+local Player          = require 'src.entities.Player'
+local Enemy           = require 'src.entities.Enemy'
+local EnemyManager    = require 'src.system.EnemyManager'
+local Camera          = require 'src.components.Camera'
+local CollisionSystem = require 'src.system.CollisionSystem'
 
-love.physics.setMeter(64)
-local world = love.physics.newWorld(0, 0, true)
-local camera = Camera:new()
-local player = Player:new()
-local enemyManager = EnemyManager:new()
+
+local collisionSystem = CollisionSystem:new()
+local camera          = Camera:new()
+local player          = Player:new()
+local enemyManager    = EnemyManager:new(collisionSystem)
+
+collisionSystem:addContactCallbacks(Player.type, Enemy.type, function(p, e)
+    print("player x enemy contact")
+    print(p)
+    print(e)
+    print("")
+end)
+
+collisionSystem:addEntity(player)
 
 function love.load()
+    local world = collisionSystem:getWorld()
     player:load(world)
     enemyManager:load(world)
     enemyManager:setTargetPosition(player.position)
@@ -24,6 +36,6 @@ end
 function love.update(dt)
     player:update(dt)
     enemyManager:update(dt)
+    collisionSystem:update(dt)
     camera:lookAt(player.position:get())
-    world:update(dt)
 end

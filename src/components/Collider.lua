@@ -1,7 +1,6 @@
 local Collider = {}
 Collider.__index = Collider
 
-
 ---@param world love.physics.World
 ---@param x number
 ---@param y number

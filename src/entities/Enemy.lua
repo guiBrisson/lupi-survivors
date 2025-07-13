@@ -1,6 +1,5 @@
 local StateMachine    = require 'src.components.StateMachine'
 local Position        = require 'src.components.Position'
-local Movement        = require 'src.components.Movement'
 local Health          = require 'src.components.Health'
 local Collider        = require 'src.components.Collider'
 local Params          = require 'src.utils.params'
@@ -8,6 +7,7 @@ local Params          = require 'src.utils.params'
 local Enemy           = {}
 Enemy.__index         = Enemy
 
+Enemy.type            = "enemy"
 local STATE_TARGETING = "targeting"
 local STATE_IDLE      = "idle"
 local STATE_ALIVE     = "alive"
@@ -28,11 +28,11 @@ function Enemy:new(params)
 end
 
 function Enemy:load(world)
+    self.type = "enemy"
     self.sm = StateMachine:new()
     self.position = Position:new(self.params.x, self.params.y)
-    self.movement = Movement:new(self.params.speed)
     self.health = Health:new(self.params.maxHp)
-    self.collider = Collider:new(world, 0, 0, 'dynamic', self.params.size, self)
+    self.collider = Collider:new(world, self.params.x, self.params.y, 'dynamic', self.params.size, self)
     self.collider:setFixedRotation(true)
     self.target = {}
 
@@ -92,7 +92,7 @@ end
 function Enemy:_handle_movement(dt)
     if (self.target.position ~= nil) then
         local x, y = self.position:get()
-        local speed = self.movement:getSpeed()
+        local speed = self.params.speed
         local targetX, targetY = self.target.position:get()
         local directionX = targetX - x
         local directionY = targetY - y

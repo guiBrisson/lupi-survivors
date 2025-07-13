@@ -3,10 +3,11 @@ local Enemy = require 'src.entities.Enemy'
 local EnemyManager = {}
 EnemyManager.__index = EnemyManager
 
-function EnemyManager:new()
+function EnemyManager:new(collisionSystem)
     local instance = setmetatable({}, self)
     instance.enemies = {}
     instance.target = {}
+    instance.collisionSystem = collisionSystem --TODO: remove this later
     return instance
 end
 
@@ -48,6 +49,7 @@ end
 ---@param enemy Enemy
 function EnemyManager:_addEnemy(enemy)
     table.insert(self.enemies, enemy)
+    self.collisionSystem:addEntity(enemy)
 end
 
 return EnemyManager

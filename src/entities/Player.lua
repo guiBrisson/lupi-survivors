@@ -9,6 +9,7 @@ local Params       = require 'src.utils.params'
 local Player       = {}
 Player.__index     = Player
 
+Player.type        = "player"
 local STATE_ALIVE  = "alive"
 local STATE_DEAD   = "dead"
 
@@ -32,8 +33,10 @@ function Player:load(world)
     self.movement = Movement:new(self.params.speed)
     self.control = Control:new()
     self.health = Health:new(self.params.maxHp)
-    self.collider = Collider:new(world, self.params.x, self.params.y, 'dynamic', self.params.size, self)
-    self.collider:setFixedRotation(true)
+
+    local collider = Collider:new(world, self.params.x, self.params.y, 'dynamic', self.params.size, self)
+    collider:setFixedRotation(true)
+    self.collider = collider
 
     self:_load_states()
 end
@@ -53,9 +56,8 @@ end
 function Player:_handle_state(dt)
     self.sm:update(dt)
 
-
     if self.health:get() <= 0 then
-        self.sm.change_state(STATE_DEAD)
+        self.sm:change_state(STATE_DEAD)
     end
 end
 
