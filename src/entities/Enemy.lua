@@ -3,6 +3,7 @@ local Position        = require 'src.components.Position'
 local Movement        = require 'src.components.Movement'
 local Health          = require 'src.components.Health'
 local Collider        = require 'src.components.Collider'
+local Params          = require 'src.utils.params'
 
 local Enemy           = {}
 Enemy.__index         = Enemy
@@ -12,7 +13,7 @@ local STATE_IDLE      = "idle"
 local STATE_ALIVE     = "alive"
 local STATE_DEAD      = "dead"
 
-function Enemy:new(world, params)
+function Enemy:new(params)
     local instance = setmetatable({}, self)
     local default = {
         x = 0,
@@ -22,23 +23,19 @@ function Enemy:new(world, params)
         maxHp = 100,
     }
 
-    -- Merge defaults with provided parameters
-    instance.params = params or {}
-    for key, value in pairs(default) do
-        instance.params[key] = instance.params[key] or value
-    end
-
-    instance.sm = StateMachine:new()
-    instance.position = Position:new(instance.params.x, instance.params.y)
-    instance.movement = Movement:new(instance.params.speed)
-    instance.health = Health:new(instance.params.maxHp)
-    instance.collider = Collider:new(world, 0, 0, 'dynamic', instance.params.size, self)
-    instance.collider:setFixedRotation(true)
-    instance.target = {}
+    instance.params = Params.Merge(default, params)
     return instance
 end
 
-function Enemy:load()
+function Enemy:load(world)
+    self.sm = StateMachine:new()
+    self.position = Position:new(self.params.x, self.params.y)
+    self.movement = Movement:new(self.params.speed)
+    self.health = Health:new(self.params.maxHp)
+    self.collider = Collider:new(world, 0, 0, 'dynamic', self.params.size, self)
+    self.collider:setFixedRotation(true)
+    self.target = {}
+
     self:_load_states()
 end
 

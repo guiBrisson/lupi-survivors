@@ -4,6 +4,7 @@ local Movement     = require 'src.components.Movement'
 local Control      = require 'src.components.Control'
 local Health       = require 'src.components.Health'
 local Collider     = require 'src.components.Collider'
+local Params       = require 'src.utils.params'
 
 local Player       = {}
 Player.__index     = Player
@@ -11,28 +12,37 @@ Player.__index     = Player
 local STATE_ALIVE  = "alive"
 local STATE_DEAD   = "dead"
 
-function Player:new(world)
+function Player:new(params)
     local instance = setmetatable({}, self)
+    local default = {
+        x = 0,
+        y = 0,
+        size = 50,
+        speed = 150,
+        maxHP = 100,
+    }
 
-    instance.sm = StateMachine:new()
-    instance.size = 50
-    instance.position = Position:new(0, 0)
-    instance.movement = Movement:new(150)
-    instance.control = Control:new()
-    instance.health = Health:new(100)
-    instance.collider = Collider:new(world, 0, 0, 'dynamic', instance.size, self)
-    instance.collider:setFixedRotation(true)
+    instance.params = Params.Merge(default, params)
     return instance
 end
 
-function Player:load()
+function Player:load(world)
+    self.sm = StateMachine:new()
+    self.position = Position:new(self.params.x, self.params.y)
+    self.movement = Movement:new(self.params.speed)
+    self.control = Control:new()
+    self.health = Health:new(self.params.maxHp)
+    self.collider = Collider:new(world, self.params.x, self.params.y, 'dynamic', self.params.size, self)
+    self.collider:setFixedRotation(true)
+
     self:_load_states()
 end
 
 function Player:draw()
     local x, y = self.position:get()
+    local size = self.params.size
     love.graphics.setColor(0, 1, 0)
-    love.graphics.rectangle('fill', x - self.size / 2, y - self.size / 2, self.size, self.size)
+    love.graphics.rectangle('fill', x - size / 2, y - size / 2, size, size)
     self.collider:draw()
 end
 
