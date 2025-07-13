@@ -15,12 +15,14 @@ Player.type = "player"
 local STATE_ALIVE = "alive"
 local STATE_DEAD  = "dead"
 
+---@param params tables|nil
 function Player:new(params)
     local instance = setmetatable({}, self)
     local default = {
         x = 0,
         y = 0,
-        size = 50,
+        width = 50,
+        height = 50,
         speed = 150,
         maxHP = 100,
     }
@@ -36,7 +38,14 @@ function Player:load(world)
         movement = Movement:new(self.params.speed),
         control = Control:new(),
         health = Health:new(self.params.maxHp),
-        collider = Collider:new(world, self.params.x, self.params.y, 'dynamic', self.params.size, self, true),
+        collider = Collider:new({
+            world = world,
+            x = self.params.x,
+            y = self.params.y,
+            width = self.params.width,
+            height = self.params.height,
+            userData = self,
+        }),
     }
 
     self:_load_states()
@@ -44,9 +53,11 @@ end
 
 function Player:draw()
     local x, y = self.components.position:get()
-    local size = self.params.size
+    local width = self.params.width
+    local height = self.params.height
+
     love.graphics.setColor(0, 1, 0)
-    love.graphics.rectangle('fill', x - size / 2, y - size / 2, size, size)
+    love.graphics.rectangle('fill', x - width / 2, y - height / 2, width, height)
     self.components.collider:draw()
 end
 

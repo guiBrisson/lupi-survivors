@@ -1,21 +1,39 @@
+local Params = require 'src.utils.params'
+
 local Collider = {}
 Collider.__index = Collider
 
----@param world love.physics.World
----@param x number
----@param y number
----@param type 'static'|'dynamic'|'kinematic'
----@param size number
----@param userData any
----@param fixedRotation boolean
-function Collider:new(world, x, y, type, size, userData, fixedRotation)
+---@param params table
+function Collider:new(params)
     local instance = setmetatable({}, self)
-    instance.body = love.physics.newBody(world, x, y, type)
-    instance.body:setFixedRotation(fixedRotation or true)
+    local default = {
+        world = nil,         -- love.physics.World
+        x = nil,             -- number
+        y = nil,             -- number
+        width = nil,         -- number
+        height = nil,        -- number
+        type = 'dynamic',    -- 'static'|'dynamic'|'kinematic'
+        size = nil,          -- number
+        userData = nil,      -- any
+        fixedRotation = true -- boolean
+    }
 
-    instance.shape = love.physics.newRectangleShape(size, size)
+    instance.params = Params.Merge(default, params)
+
+    instance.body = love.physics.newBody(
+        instance.params.world,
+        instance.params.x,
+        instance.params.y,
+        instance.params.type
+    )
+    instance.body:setFixedRotation(instance.params.fixedRotation)
+
+    instance.shape = love.physics.newRectangleShape(
+        instance.params.width,
+        instance.params.height
+    )
     instance.fixture = love.physics.newFixture(instance.body, instance.shape)
-    instance.fixture:setUserData(userData)
+    instance.fixture:setUserData(instance.params.userData)
     return instance
 end
 

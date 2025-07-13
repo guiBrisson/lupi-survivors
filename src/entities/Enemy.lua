@@ -38,7 +38,14 @@ function Enemy:load(world)
         sm = StateMachine:new(),
         position = Position:new(self.params.x, self.params.y),
         health = Health:new(self.params.maxHp),
-        collider = Collider:new(world, self.params.x, self.params.y, 'dynamic', self.params.size, self, true),
+        collider = Collider:new({
+            world = world,
+            x = self.params.x,
+            y = self.params.y,
+            width = self.params.size,
+            height = self.params.size,
+            userData = self,
+        }),
     }
 
     self.target = {}
