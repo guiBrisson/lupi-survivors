@@ -7,9 +7,12 @@ Collider.__index = Collider
 ---@param type 'static'|'dynamic'|'kinematic'
 ---@param size number
 ---@param userData any
-function Collider:new(world, x, y, type, size, userData)
+---@param fixedRotation boolean
+function Collider:new(world, x, y, type, size, userData, fixedRotation)
     local instance = setmetatable({}, self)
     instance.body = love.physics.newBody(world, x, y, type)
+    instance.body:setFixedRotation(fixedRotation or true)
+
     instance.shape = love.physics.newRectangleShape(size, size)
     instance.fixture = love.physics.newFixture(instance.body, instance.shape)
     instance.fixture:setUserData(userData)
@@ -46,6 +49,18 @@ end
 ---@param isFixed any
 function Collider:setFixedRotation(isFixed)
     self:getBody():setFixedRotation(isFixed)
+end
+
+function Collider:destroy()
+    if self.fixture then
+        self.fixture:destroy()
+        self.fixture = nil
+    end
+
+    if self.body then
+        self.body:destroy()
+        self.body = nil
+    end
 end
 
 return Collider
