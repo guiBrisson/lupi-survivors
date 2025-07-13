@@ -5,6 +5,8 @@ local Camera          = require 'src.components.Camera'
 local CollisionSystem = require 'src.system.CollisionSystem'
 
 
+love.graphics.setDefaultFilter("nearest", "nearest")
+
 local collisionSystem = CollisionSystem:new()
 local camera          = Camera:new()
 local player          = Player:new()

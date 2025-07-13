@@ -1,10 +1,11 @@
+local Params       = require 'src.utils.params'
 local StateMachine = require 'src.components.StateMachine'
 local Position     = require 'src.components.Position'
 local Movement     = require 'src.components.Movement'
 local Control      = require 'src.components.Control'
 local Health       = require 'src.components.Health'
 local Collider     = require 'src.components.Collider'
-local Params       = require 'src.utils.params'
+local Sprite       = require 'src.components.Sprite'
 
 
 local Player = {}
@@ -21,10 +22,12 @@ function Player:new(params)
     local default = {
         x = 0,
         y = 0,
-        width = 50,
-        height = 50,
         speed = 150,
         maxHP = 100,
+        imagePath = "src/assets/player.jpg",
+        collisionMarginWidth = 0,
+        collisionMarginHeight = 0,
+        scale = 3,
     }
 
     instance.params = Params.Merge(default, params)
@@ -32,20 +35,31 @@ function Player:new(params)
 end
 
 function Player:load(world)
+    local sprite = Sprite:new({
+        imagePath = self.params.imagePath,
+        scaleX = self.params.scale,
+        scaleY = self.params.scale,
+    })
+
+    local colliderWidth = (sprite.image:getWidth() * self.params.scale) + self.params.collisionMarginWidth
+    local colliderHeight = (sprite.image:getHeight() * self.params.scale) + self.params.collisionMarginHeight
+    local collider = Collider:new({
+        world = world,
+        x = self.params.x,
+        y = self.params.y,
+        width = colliderWidth,
+        height = colliderHeight,
+        userData = self,
+    })
+
     self.components = {
         sm = StateMachine:new(),
         position = Position:new(self.params.x, self.params.y),
         movement = Movement:new(self.params.speed),
         control = Control:new(),
         health = Health:new(self.params.maxHp),
-        collider = Collider:new({
-            world = world,
-            x = self.params.x,
-            y = self.params.y,
-            width = self.params.width,
-            height = self.params.height,
-            userData = self,
-        }),
+        collider = collider,
+        sprite = sprite,
     }
 
     self:_load_states()
@@ -53,11 +67,11 @@ end
 
 function Player:draw()
     local x, y = self.components.position:get()
-    local width = self.params.width
-    local height = self.params.height
+    local width, height = self:getSize()
+    local drawX = x - (width * self.params.scale) / 2
+    local drawY = y - (height * self.params.scale) / 2
 
-    love.graphics.setColor(0, 1, 0)
-    love.graphics.rectangle('fill', x - width / 2, y - height / 2, width, height)
+    self.components.sprite:draw(drawX, drawY)
     self.components.collider:draw()
 end
 
@@ -74,17 +88,17 @@ function Player:_handle_state(dt)
 end
 
 function Player:_load_states()
-    local sm = self.components.sm
-    sm:add_state(STATE_ALIVE, {
+    local stateMachine = self.components.sm
+    stateMachine:add_state(STATE_ALIVE, {
         update = function(dt)
             self:_handle_movement(dt)
         end,
     })
 
-    sm:add_state(STATE_DEAD)
+    stateMachine:add_state(STATE_DEAD)
 
     -- Set initial state
-    sm:change_state(STATE_ALIVE)
+    stateMachine:change_state(STATE_ALIVE)
 end
 
 function Player:_handle_movement(dt)
@@ -93,6 +107,13 @@ function Player:_handle_movement(dt)
     local newX, newY = self.components.movement:move(dt, x, y, directionX, directionY)
     self.components.position:set(newX, newY)
     self.components.collider:setPosition(newX, newY)
+end
+
+---@return width number
+---@return height number
+function Player:getSize()
+    local image = self.components.sprite.image
+    return image:getWidth(), image:getHeight()
 end
 
 function Player:destroy()

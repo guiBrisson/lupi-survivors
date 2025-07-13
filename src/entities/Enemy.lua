@@ -3,6 +3,7 @@ local Position     = require 'src.components.Position'
 local Health       = require 'src.components.Health'
 local Collider     = require 'src.components.Collider'
 local Params       = require 'src.utils.params'
+local Sprite       = require 'src.components.Sprite'
 
 
 local Enemy = {}
@@ -14,15 +15,17 @@ local STATE_TARGETING = "targeting"
 local STATE_IDLE      = "idle"
 local STATE_DEAD      = "dead"
 
-
 function Enemy:new(params)
     local instance = setmetatable({}, self)
     local default = {
         x = 0,
         y = 0,
-        size = 20,
         speed = 100,
         maxHp = 100,
+        imagePath = "src/assets/orc.jpg",
+        collisionMarginWidth = 0,
+        collisionMarginHeight = 0,
+        scale = 3,
     }
 
     instance.params = Params.Merge(default, params)
@@ -34,18 +37,29 @@ function Enemy:new(params)
 end
 
 function Enemy:load(world)
+    local sprite = Sprite:new({
+        imagePath = self.params.imagePath,
+        scaleX = self.params.scale,
+        scaleY = self.params.scale,
+    })
+
+    local colliderWidth = (sprite.image:getWidth() * self.params.scale) + self.params.collisionMarginWidth
+    local colliderHeight = (sprite.image:getHeight() * self.params.scale) + self.params.collisionMarginHeight
+    local collider = Collider:new({
+        world = world,
+        x = self.params.x,
+        y = self.params.y,
+        width = colliderWidth,
+        height = colliderHeight,
+        userData = self,
+    })
+
     self.components = {
         sm = StateMachine:new(),
         position = Position:new(self.params.x, self.params.y),
         health = Health:new(self.params.maxHp),
-        collider = Collider:new({
-            world = world,
-            x = self.params.x,
-            y = self.params.y,
-            width = self.params.size,
-            height = self.params.size,
-            userData = self,
-        }),
+        collider = collider,
+        sprite = sprite,
     }
 
     self.target = {}
@@ -59,9 +73,11 @@ end
 
 function Enemy:draw()
     local x, y = self.components.position:get()
-    local size = 20
-    love.graphics.setColor(1, 0, 0)
-    love.graphics.rectangle('fill', x - size / 2, y - size / 2, size, size)
+    local width, height = self:getSize()
+    local drawX = x - (width * self.params.scale) / 2
+    local drawY = y - (height * self.params.scale) / 2
+
+    self.components.sprite:draw(drawX, drawY)
     self.components.collider:draw()
 end
 
@@ -141,6 +157,13 @@ end
 function Enemy:takeDamage(amount)
     local health = self.components.health
     health:damage(amount)
+end
+
+---@return width number
+---@return height number
+function Enemy:getSize()
+    local image = self.components.sprite.image
+    return image:getWidth(), image:getHeight()
 end
 
 function Enemy:destroy()

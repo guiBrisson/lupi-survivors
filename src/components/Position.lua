@@ -10,8 +10,6 @@ function Position:new(x, y)
     return instance
 end
 
---- @param x number
---- @param y number
 function Position:set(x, y)
     self.x = x
     self.y = y

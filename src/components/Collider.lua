@@ -7,15 +7,16 @@ Collider.__index = Collider
 function Collider:new(params)
     local instance = setmetatable({}, self)
     local default = {
-        world = nil,         -- love.physics.World
-        x = nil,             -- number
-        y = nil,             -- number
-        width = nil,         -- number
-        height = nil,        -- number
-        type = 'dynamic',    -- 'static'|'dynamic'|'kinematic'
-        size = nil,          -- number
-        userData = nil,      -- any
-        fixedRotation = true -- boolean
+        world = nil,          -- love.physics.World
+        x = nil,              -- number
+        y = nil,              -- number
+        width = nil,          -- number
+        height = nil,         -- number
+        type = 'dynamic',     -- 'static'|'dynamic'|'kinematic'
+        size = nil,           -- number
+        userData = nil,       -- any
+        fixedRotation = true, -- boolean
+        shape = 'rectangle'   --
     }
 
     instance.params = Params.Merge(default, params)
@@ -32,6 +33,7 @@ function Collider:new(params)
         instance.params.width,
         instance.params.height
     )
+
     instance.fixture = love.physics.newFixture(instance.body, instance.shape)
     instance.fixture:setUserData(instance.params.userData)
     return instance
