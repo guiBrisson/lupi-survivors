@@ -7,16 +7,20 @@ Collider.__index = Collider
 function Collider:new(params)
     local instance = setmetatable({}, self)
     local default = {
-        world = nil,          -- love.physics.World
-        x = nil,              -- number
-        y = nil,              -- number
-        width = nil,          -- number
-        height = nil,         -- number
-        type = 'dynamic',     -- 'static'|'dynamic'|'kinematic'
-        size = nil,           -- number
-        userData = nil,       -- any
-        fixedRotation = true, -- boolean
-        shape = 'rectangle'   --
+        world = nil,             -- love.physics.World
+        x = nil,                 -- number
+        y = nil,                 -- number
+        shapeType = "rectangle", -- 'rectangle' | 'circle' | 'polygon'
+        width = nil,             -- number For rectangle
+        height = nil,            -- number For rectangle
+        radius = nil,            -- number For circle
+        vertices = nil,          -- table For polygon: {x1, y1, x2, y2, ...}
+        type = 'dynamic',        -- 'static'|'dynamic'|'kinematic'
+        offsetX = 0,             -- number
+        offsetY = 0,             -- number
+        size = nil,              -- number
+        userData = nil,          -- any
+        fixedRotation = true,    -- boolean
     }
 
     instance.params = Params.Merge(default, params)
@@ -29,10 +33,24 @@ function Collider:new(params)
     )
     instance.body:setFixedRotation(instance.params.fixedRotation)
 
-    instance.shape = love.physics.newRectangleShape(
-        instance.params.width,
-        instance.params.height
-    )
+    if instance.params.shapeType == "rectangle" then
+        instance.shape = love.physics.newRectangleShape(
+            instance.params.offsetX,
+            instance.params.offsetY,
+            instance.params.width,
+            instance.params.height
+        )
+    elseif instance.params.shapeType == "circle" then
+        instance.shape = love.physics.newCircleShape(
+            instance.params.offsetX,
+            instance.params.offsetY,
+            instance.params.radius
+        )
+    elseif instance.params.shapeType == "polygon" then
+        instance.shape = love.physics.newPolyhonShape(instance.params.vertices)
+    else
+        error("invalid collision shape type: " .. tostring(instance.params.shapeType))
+    end
 
     instance.fixture = love.physics.newFixture(instance.body, instance.shape)
     instance.fixture:setUserData(instance.params.userData)
@@ -41,7 +59,12 @@ end
 
 function Collider:draw()
     love.graphics.setColor(1, 1, 1)
-    love.graphics.polygon('line', self.body:getWorldPoints(self.shape:getPoints()))
+    if self.params.shapeType == "rectangle" or self.params.shapeType == "polygon" then
+        love.graphics.polygon('line', self.body:getWorldPoints(self.shape:getPoints()))
+    elseif self.params.shapeType == "circle" then
+        local cx, cy = self.body:getWorldPoint(self.shape:getPoint())
+        love.graphics.circle('line', cx, cy, self.shape:getRadius())
+    end
 end
 
 ---@param x number

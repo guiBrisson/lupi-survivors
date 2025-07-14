@@ -13,10 +13,11 @@ Player.__index = Player
 Player.type = "player"
 
 
-local STATE_ALIVE = "alive"
-local STATE_DEAD  = "dead"
+local SHOW_COLLIDER = true
+local STATE_ALIVE   = "alive"
+local STATE_DEAD    = "dead"
 
----@param params tables|nil
+---@param params table|nil
 function Player:new(params)
     local instance = setmetatable({}, self)
     local default = {
@@ -25,9 +26,21 @@ function Player:new(params)
         speed = 150,
         maxHP = 100,
         imagePath = "src/assets/player.jpg",
-        collisionMarginWidth = 0,
-        collisionMarginHeight = 0,
         scale = 3,
+        sprite = {
+            -- Sprite anchoring (0-1, where 0.5 is center)
+            anchorX = 0.5,
+            anchorY = 0.5,
+        },
+        collider = {
+            shapeType = "rectangle",
+            width = nil,  -- auto-calculated
+            height = nil, -- auto-calculated
+            offsetX = 0,
+            offsetY = 0,
+            radius = nil,    -- For circle shapes
+            verticies = nil, -- For polygon shapes
+        },
     }
 
     instance.params = Params.Merge(default, params)
@@ -41,14 +54,27 @@ function Player:load(world)
         scaleY = self.params.scale,
     })
 
-    local colliderWidth = (sprite.image:getWidth() * self.params.scale) + self.params.collisionMarginWidth
-    local colliderHeight = (sprite.image:getHeight() * self.params.scale) + self.params.collisionMarginHeight
+    local spriteWidth = sprite.image:getWidth() * self.params.scale
+    local spriteHeight = sprite.image:getHeight() * self.params.scale
+
+    self.params.sprite.spriteWidth = spriteWidth
+    self.params.sprite.spriteHeight = spriteHeight
+
+    local colliderConfig = self.params.collider
+    colliderConfig.width = colliderConfig.width or spriteWidth
+    colliderConfig.height = colliderConfig.height or spriteHeight
+
     local collider = Collider:new({
         world = world,
         x = self.params.x,
         y = self.params.y,
-        width = colliderWidth,
-        height = colliderHeight,
+        shapeType = colliderConfig.shapeType,
+        width = colliderConfig.width,
+        height = colliderConfig.height,
+        radius = colliderConfig.radius,
+        verticies = colliderConfig.verticies,
+        offsetX = colliderConfig.offsetX,
+        offsetY = colliderConfig.offsetY,
         userData = self,
     })
 
@@ -67,12 +93,14 @@ end
 
 function Player:draw()
     local x, y = self.components.position:get()
-    local width, height = self:getSize()
-    local drawX = x - (width * self.params.scale) / 2
-    local drawY = y - (height * self.params.scale) / 2
+    local drawX = x - self.params.sprite.spriteWidth * self.params.sprite.anchorX
+    local drawY = y - self.params.sprite.spriteHeight * self.params.sprite.anchorY
 
     self.components.sprite:draw(drawX, drawY)
-    self.components.collider:draw()
+
+    if SHOW_COLLIDER then
+        self.components.collider:draw()
+    end
 end
 
 function Player:update(dt)
