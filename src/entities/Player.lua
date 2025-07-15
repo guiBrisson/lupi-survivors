@@ -1,6 +1,6 @@
 local Params       = require 'src.utils.params'
 local StateMachine = require 'src.components.StateMachine'
-local Position     = require 'src.components.Position'
+local Transform    = require 'src.components.Transform'
 local Movement     = require 'src.components.Movement'
 local Control      = require 'src.components.Control'
 local Health       = require 'src.components.Health'
@@ -13,9 +13,8 @@ Player.__index = Player
 Player.type = "player"
 
 
-local SHOW_COLLIDER = true
-local STATE_ALIVE   = "alive"
-local STATE_DEAD    = "dead"
+local STATE_ALIVE = "alive"
+local STATE_DEAD  = "dead"
 
 ---@param params table|nil
 function Player:new(params)
@@ -48,7 +47,16 @@ function Player:new(params)
 end
 
 function Player:load(world)
+    local transform = Transform:new({
+        x = self.params.x,
+        y = self.params.y,
+        scaleX = self.params.scale,
+        scaleY = self.params.scale,
+    })
+
+
     local sprite = Sprite:new({
+        transform = transform,
         imagePath = self.params.imagePath,
         scaleX = self.params.scale,
         scaleY = self.params.scale,
@@ -66,6 +74,7 @@ function Player:load(world)
 
     local collider = Collider:new({
         world = world,
+        transform = transform,
         x = self.params.x,
         y = self.params.y,
         shapeType = colliderConfig.shapeType,
@@ -75,12 +84,13 @@ function Player:load(world)
         verticies = colliderConfig.verticies,
         offsetX = colliderConfig.offsetX,
         offsetY = colliderConfig.offsetY,
+        syncDirection = Collider.SYNC_TRANSFORM_TO_PHYSICS,
         userData = self,
     })
 
     self.components = {
         sm = StateMachine:new(),
-        position = Position:new(self.params.x, self.params.y),
+        transform = transform,
         movement = Movement:new(self.params.speed),
         control = Control:new(),
         health = Health:new(self.params.maxHp),
@@ -92,19 +102,16 @@ function Player:load(world)
 end
 
 function Player:draw()
-    local x, y = self.components.position:get()
-    local drawX = x - self.params.sprite.spriteWidth * self.params.sprite.anchorX
-    local drawY = y - self.params.sprite.spriteHeight * self.params.sprite.anchorY
+    self.components.sprite:draw()
 
-    self.components.sprite:draw(drawX, drawY)
-
-    if SHOW_COLLIDER then
+    if DEBUG_MODE then
         self.components.collider:draw()
     end
 end
 
 function Player:update(dt)
     self:_handle_state(dt)
+    self.components.collider:update(dt)
 end
 
 function Player:_handle_state(dt)
@@ -131,10 +138,13 @@ end
 
 function Player:_handle_movement(dt)
     local directionX, directionY = self.components.control:update(dt)
-    local x, y = self.components.position:get()
+    local x, y = self:getPosition()
     local newX, newY = self.components.movement:move(dt, x, y, directionX, directionY)
-    self.components.position:set(newX, newY)
-    self.components.collider:setPosition(newX, newY)
+    self.components.transform:setPosition(newX, newY)
+end
+
+function Player:getPosition()
+    return self.components.transform:getWorldPosition()
 end
 
 ---@return width number

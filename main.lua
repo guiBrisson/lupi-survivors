@@ -5,16 +5,19 @@ local Camera          = require 'src.components.Camera'
 local CollisionSystem = require 'src.system.CollisionSystem'
 
 
+DEBUG_MODE = true
+
 love.graphics.setDefaultFilter("nearest", "nearest")
 
+local width, height   = love.window.getMode()
 local collisionSystem = CollisionSystem:new()
 local camera          = Camera:new()
-local player          = Player:new()
+local player          = Player:new({ x = width / 2, y = height / 2 })
 local enemyManager    = EnemyManager:new()
 
 collisionSystem:addContactCallbacks(Player.type, Enemy.type, function(p, e)
     --TODO: the amount of damage should be comming from the player
-    e:takeDamage(100)
+    -- e:takeDamage(100)
 end)
 
 collisionSystem:addEntity(player)
@@ -26,7 +29,6 @@ function love.load()
     local world = collisionSystem:getWorld()
     player:load(world)
     enemyManager:load(world)
-    enemyManager:setTargetPosition(player.components.position)
 end
 
 function love.draw()
@@ -39,6 +41,7 @@ end
 function love.update(dt)
     player:update(dt)
     enemyManager:update(dt)
+    enemyManager:setTargetPosition(player:getPosition())
     collisionSystem:update(dt)
-    camera:lookAt(player.components.position:get())
+    camera:lookAt(player:getPosition())
 end

@@ -1,5 +1,4 @@
 local cam = require 'libs.camera'
-local Position = require 'src.components.Position'
 
 local Camera = {}
 Camera.__index = Camera

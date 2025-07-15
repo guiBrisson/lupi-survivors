@@ -6,7 +6,10 @@ EnemyManager.__index = EnemyManager
 function EnemyManager:new()
     local instance = setmetatable({}, self)
     instance.enemies = {}
-    instance.target = {}
+    instance.deadEnemies = {}
+    instance.target = {
+        position = { x = nil, y = nil }
+    }
     instance.callbacks = {
         onAddEnemy = {},
         onRemoveEnemy = {},
@@ -22,7 +25,7 @@ function EnemyManager:load(world)
         self:_addEnemy(enemy)
         enemy:load(world)
         enemy:onDeadState(function()
-            self:_removeEnemy(enemy)
+            self:markForRemoval(enemy)
         end)
     end
 end
@@ -31,16 +34,26 @@ function EnemyManager:update(dt)
     for _, enemy in ipairs(self.enemies) do
         enemy:update(dt)
 
-        if self.target.position then
-            enemy:update_target_position(self.target.position)
+        local hasTargetPosition = self.target.position.x ~= nil and self.target.position.y ~= nil
+        if hasTargetPosition then
+            enemy:updateTargetPosition(self.target.position.x, self.target.position.y)
         end
     end
+
+    for _, enemy in ipairs(self.deadEnemies) do
+        self:_removeEnemy(enemy)
+    end
+    self.deadEnemies = {}
 end
 
 function EnemyManager:draw()
     for _, enemy in ipairs(self.enemies) do
         enemy:draw()
     end
+end
+
+function EnemyManager:markForRemoval(enemy)
+    table.insert(self.deadEnemies, enemy)
 end
 
 ---@param enemy Enemy
@@ -54,8 +67,8 @@ end
 function EnemyManager:_removeEnemy(enemy)
     for i, e in ipairs(self.enemies) do
         if e == enemy then
-            e:destroy()
             table.remove(self.enemies, i)
+            e:destroy()
             break
         end
     end
@@ -79,9 +92,9 @@ function EnemyManager:onRemoveEnemy(callback)
     table.insert(callbacks, callback)
 end
 
----@param position Position
-function EnemyManager:setTargetPosition(position)
-    self.target.position = position
+function EnemyManager:setTargetPosition(x, y)
+    self.target.position.x = x
+    self.target.position.y = y
 end
 
 function EnemyManager:clearTargetPosition()

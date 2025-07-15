@@ -7,35 +7,29 @@ Sprite.__index = Sprite
 function Sprite:new(params)
     local instance = setmetatable({}, self)
     local default = {
-        imagePath = nil,
-        offsetX = 0,
-        offsetY = 0,
+        transform = nil, --Transform (not optional)
+        imagePath = nil, --string (not optional)
         scaleX = 1,
         scaleY = 1,
         rotation = 0,
         color = { 1, 1, 1, 1 },
-        anchorX = 0,
-        anchorY = 0
     }
 
     instance.params = Params.Merge(default, params)
     instance.image = love.graphics.newImage(instance.params.imagePath)
 
-    instance.anchorOffsetX = instance.image:getWidth() * instance.params.anchorX * instance.params.scaleX
-    instance.anchorOffsetY = instance.image:getHeight() * instance.params.anchorY * instance.params.scaleY
-
     return instance
 end
 
-function Sprite:draw(x, y)
+function Sprite:draw()
+    local x, y = self.params.transform:getWorldPosition()
     local width = self.image:getWidth()
     local height = self.image:getHeight()
-
     love.graphics.setColor(self.params.color)
     love.graphics.draw(
         self.image,
-        x + self.anchorOffsetX + self.params.offsetX,
-        y + self.anchorOffsetY + self.params.offsetY,
+        x - (width / 2) * self.params.scaleX,
+        y - (height / 2) * self.params.scaleY,
         self.params.rotation,
         self.params.scaleX,
         self.params.scaleY

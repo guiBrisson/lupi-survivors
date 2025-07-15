@@ -1,5 +1,5 @@
 local StateMachine = require 'src.components.StateMachine'
-local Position     = require 'src.components.Position'
+local Transform    = require 'src.components.Transform'
 local Health       = require 'src.components.Health'
 local Collider     = require 'src.components.Collider'
 local Params       = require 'src.utils.params'
@@ -11,7 +11,6 @@ Enemy.__index = Enemy
 Enemy.type = "enemy"
 
 
-local SHOW_COLLIDER   = true
 local STATE_TARGETING = "targeting"
 local STATE_IDLE      = "idle"
 local STATE_DEAD      = "dead"
@@ -45,13 +44,24 @@ function Enemy:new(params)
     instance.params = Params.Merge(default, params)
     instance.components = {}
     instance.callbacks = {
-        onDeadState = {}
+        onDeadState = {},
+    }
+    instance.target = {
+        position = { x = nil, y = nil },
     }
     return instance
 end
 
 function Enemy:load(world)
+    local transform = Transform:new({
+        x = self.params.x,
+        y = self.params.y,
+        scaleX = self.params.scale,
+        scaleY = self.params.scale,
+    })
+
     local sprite = Sprite:new({
+        transform = transform,
         imagePath = self.params.imagePath,
         scaleX = self.params.scale,
         scaleY = self.params.scale,
@@ -69,6 +79,7 @@ function Enemy:load(world)
 
     local collider = Collider:new({
         world = world,
+        transform = transform,
         x = self.params.x,
         y = self.params.y,
         shapeType = colliderConfig.shapeType,
@@ -78,44 +89,40 @@ function Enemy:load(world)
         verticies = colliderConfig.verticies,
         offsetX = colliderConfig.offsetX,
         offsetY = colliderConfig.offsetY,
+        syncDirection = Collider.SYNC_PHYSICS_TO_TRANSFORM,
         userData = self,
     })
 
     self.components = {
         sm = StateMachine:new(),
-        position = Position:new(self.params.x, self.params.y),
+        transform = transform,
         health = Health:new(self.params.maxHp),
         collider = collider,
         sprite = sprite,
     }
-    self.target = {}
 
-
-    self:_load_states()
+    self:_loadStates()
 end
 
 function Enemy:update(dt)
-    self:_handle_state(dt)
+    self:_handleState(dt)
+    self.components.collider:update(dt)
 end
 
 function Enemy:draw()
-    local x, y = self.components.position:get()
-    local drawX = x - self.params.sprite.spriteWidth * self.params.sprite.anchorX
-    local drawY = y - self.params.sprite.spriteHeight * self.params.sprite.anchorY
-
-    self.components.sprite:draw(drawX, drawY)
-    if SHOW_COLLIDER then
+    self.components.sprite:draw()
+    if DEBUG_MODE then
         self.components.collider:draw()
     end
 end
 
-function Enemy:_load_states()
+function Enemy:_loadStates()
     local sm = self.components.sm
     sm:add_state(STATE_IDLE)
 
     sm:add_state(STATE_TARGETING, {
         update = function(dt)
-            self:_handle_movement(dt)
+            self:_handleMovement(dt)
         end
     })
 
@@ -128,7 +135,7 @@ function Enemy:_load_states()
     sm:change_state(STATE_IDLE) -- Initial state
 end
 
-function Enemy:_handle_state(dt)
+function Enemy:_handleState(dt)
     local sm = self.components.sm
     sm:update(dt)
 
@@ -137,13 +144,12 @@ function Enemy:_handle_state(dt)
     end
 end
 
-function Enemy:_handle_movement(dt)
-    if (self.target.position ~= nil) then
-        local x, y = self.components.position:get()
+function Enemy:_handleMovement(dt)
+    if (self.target.position.x ~= nil and self.target.position.y ~= nil) then
+        local x, y = self:getPosition()
         local speed = self.params.speed
-        local targetX, targetY = self.target.position:get()
-        local directionX = targetX - x
-        local directionY = targetY - y
+        local directionX = self.target.position.x - x
+        local directionY = self.target.position.y - y
 
         -- Normalize the direction vector
         local length = math.sqrt(directionX ^ 2 + directionY ^ 2)
@@ -152,9 +158,6 @@ function Enemy:_handle_movement(dt)
             directionY = directionY / length
             self.components.collider:setLinearVelocity(directionX * speed, directionY * speed)
         end
-
-        self.components.position:set(self.components.collider:getPosition())
-        return
     end
 end
 
@@ -170,14 +173,17 @@ function Enemy:onDeadState(callback)
     table.insert(callbacks, callback)
 end
 
----@param position Position
-function Enemy:update_target_position(position)
-    self.target.position = position
+---@param x number
+---@param y number
+function Enemy:updateTargetPosition(x, y)
+    self.target.position.x = x
+    self.target.position.y = y
     self.components.sm:change_state(STATE_TARGETING)
 end
 
-function Enemy:clear_target_position()
-    self.target.position = nil
+function Enemy:clearTargetPosition()
+    self.target.position.x = nil
+    self.target.position.y = nil
     self.components.sm:change_state(STATE_IDLE)
 end
 
@@ -185,6 +191,10 @@ end
 function Enemy:takeDamage(amount)
     local health = self.components.health
     health:damage(amount)
+end
+
+function Enemy:getPosition()
+    return self.components.transform:getWorldPosition()
 end
 
 ---@return width number
