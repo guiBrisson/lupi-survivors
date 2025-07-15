@@ -23,10 +23,9 @@ function Enemy:new(params)
         y = 0,
         speed = 100,
         maxHp = 100,
-        imagePath = "src/assets/orc.jpg",
         scale = 2.5,
         sprite = {
-            -- Sprite anchoring (0-1, where 0.5 is center)
+            imagePath = "src/assets/orc.jpg",
             anchorX = 0.5,
             anchorY = 0.5,
         },
@@ -62,9 +61,11 @@ function Enemy:load(world)
 
     local sprite = Sprite:new({
         transform = transform,
-        imagePath = self.params.imagePath,
+        imagePath = self.params.sprite.imagePath,
         scaleX = self.params.scale,
         scaleY = self.params.scale,
+        anchorX = self.params.sprite.anchorX,
+        anchorY = self.params.sprite.anchorY,
     })
 
     local spriteWidth = sprite.image:getWidth() * self.params.scale

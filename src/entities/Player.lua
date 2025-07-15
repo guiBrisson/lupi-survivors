@@ -54,12 +54,13 @@ function Player:load(world)
         scaleY = self.params.scale,
     })
 
-
     local sprite = Sprite:new({
         transform = transform,
         imagePath = self.params.imagePath,
         scaleX = self.params.scale,
         scaleY = self.params.scale,
+        anchorX = self.params.sprite.anchorX,
+        anchorY = self.params.sprite.anchorY,
     })
 
     local spriteWidth = sprite.image:getWidth() * self.params.scale

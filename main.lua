@@ -8,6 +8,7 @@ local CollisionSystem = require 'src.system.CollisionSystem'
 DEBUG_MODE = true
 
 love.graphics.setDefaultFilter("nearest", "nearest")
+love.graphics.setBackgroundColor(1, 1, 1, 1)
 
 local width, height   = love.window.getMode()
 local collisionSystem = CollisionSystem:new()
