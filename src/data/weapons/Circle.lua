@@ -1,6 +1,7 @@
 local atkSprite = "src/assets/weapons/circle/circle-white.png"
 local spriteScale = 0.3
 
+--- This is a placeholder for an area atack
 local Circle = {
     name = "circle",
     type = "area",

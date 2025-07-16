@@ -39,15 +39,10 @@ end
 
 function Weapon:load()
     for i, level in ipairs(self.params.levels) do
-        local sprite = Sprite:new({
-            transform = self.transform,
-            imagePath = level.atkSprite,
-            scaleX = level.spriteScaleX,
-            scaleY = level.spriteScaleY,
-        })
+        local sprite = self:_createSpriteForLevel(level)
         table.insert(self.levelsSprite, i, sprite)
 
-        local attack = self:_createAttack(level)
+        local attack = self:_createAttackForLevel(level)
         table.insert(self.levelsAttack, i, attack)
     end
 end
@@ -86,7 +81,16 @@ function Weapon:setParentTransform(transform)
     self.transform:setParentTransform(transform)
 end
 
-function Weapon:_createAttack(level)
+function Weapon:_createSpriteForLevel(level)
+    return Sprite:new({
+        transform = self.transform,
+        imagePath = level.atkSprite,
+        scaleX = level.spriteScaleX,
+        scaleY = level.spriteScaleY,
+    })
+end
+
+function Weapon:_createAttackForLevel(level)
     if self.params.type == "area" then
         return AreaAttack:new({
             name = self.params.name,

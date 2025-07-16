@@ -11,7 +11,7 @@ function AreaAttack:new(params)
         damage = 10,
 
         areaOfEffect = 20,
-        pattern = "expand",   -- 'expand'|'fixed'
+        pattern = "fixed",    -- 'expand'|'fixed'
         speed = 100,          -- for expand pattern (TODO)
         amount = 1,
         activeCooldown = nil, -- in seconds

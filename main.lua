@@ -22,7 +22,7 @@ local weapon          = Weapon:new(Circle)
 collisionSystem:addContactCallbacks(
     Player.type, Enemy.type, function(p, e)
         --TODO: the amount of damage should be comming from the player
-        -- e:takeDamage(100)
+        e:takeDamage(100)
     end)
 
 collisionSystem:addEntity(player)
