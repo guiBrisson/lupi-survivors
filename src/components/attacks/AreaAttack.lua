@@ -11,10 +11,10 @@ function AreaAttack:new(params)
         damage = 10,
 
         areaOfEffect = 20,
-        pattern = "fixed",    -- 'expand'|'fixed'
-        speed = 100,          -- for expand pattern (TODO)
+        pattern = "fixed", -- 'expand'|'fixed'
+        speed = 100,       -- for expand pattern (TODO)
         amount = 1,
-        activeCooldown = nil, -- in seconds
+        activeTimer = 1,   -- in seconds
     }
 
     instance.params = Params.Merge(default, params)
@@ -39,7 +39,7 @@ function AreaAttack:_calculateFixedPatternUpdate(dt)
     if self.params.remainingCooldown <= 0 then
         self.isActive = not self.isActive
         if self.isActive then
-            self.params.remainingCooldown = self.params.activeCooldown
+            self.params.remainingCooldown = self.params.activeTimer
         else
             self.params.remainingCooldown = self.params.cooldown
         end

@@ -14,7 +14,7 @@ local Circle = {
             damage = 10,
             range = 10,
             cooldown = 3,
-            activeCooldown = 0.8,
+            activeTimer = 0.8,
         },
         {
             atkSprite = atkSprite,
@@ -23,7 +23,7 @@ local Circle = {
             damage = 20,
             range = 15,
             cooldown = 2.5,
-            activeCooldown = 1,
+            activeTimer = 1,
         },
         {
             atkSprite = atkSprite,
@@ -32,7 +32,7 @@ local Circle = {
             damage = 40,
             range = 22,
             cooldown = 2,
-            activeCooldown = 1.5,
+            activeTimer = 1.5,
         },
         {
             atkSprite = atkSprite,
@@ -41,7 +41,7 @@ local Circle = {
             damage = 50,
             range = 25,
             cooldown = 1.5,
-            activeCooldown = 1.9,
+            activeTimer = 1.9,
         },
         {
             atkSprite = atkSprite,
@@ -50,7 +50,7 @@ local Circle = {
             damage = 80,
             range = 30,
             cooldown = 0.5,
-            activeCooldown = 2.2,
+            activeTimer = 2.2,
         }
     }
 }
