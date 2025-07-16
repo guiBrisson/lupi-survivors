@@ -44,4 +44,8 @@ function Sprite:draw()
     )
 end
 
+function Sprite:destroy()
+    self.image:release()
+end
+
 return Sprite
