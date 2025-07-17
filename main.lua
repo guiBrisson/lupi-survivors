@@ -5,6 +5,7 @@ local Camera          = require 'src.components.Camera'
 local CollisionSystem = require 'src.system.CollisionSystem'
 local InventorySystem = require 'src.system.InventorySystem'
 local Circle          = require 'src.data.weapons.Circle'
+local EventBus        = require 'src.components.EventBus'
 
 
 DEBUG_MODE = true
@@ -13,6 +14,7 @@ love.graphics.setDefaultFilter("nearest", "nearest")
 love.graphics.setBackgroundColor(1, 1, 1, 1)
 
 local width, height   = love.window.getMode()
+local eventBus        = EventBus:new()
 local collisionSystem = CollisionSystem:new()
 local camera          = Camera:new()
 local player          = Player:new({ x = width / 2, y = height / 2 })
@@ -25,16 +27,21 @@ collisionSystem:addContactCallbacks(
         e:takeDamage(100)
     end)
 
-collisionSystem:addEntity(player)
-enemyManager:onAddEnemy(function(enemy)
-    collisionSystem:addEntity(enemy)
-end)
-
 function love.load()
     local world = collisionSystem:getWorld()
     player:load(world)
-    enemyManager:load(world)
+    enemyManager:load(world, eventBus)
     inventory:addWeapon(Circle)
+
+    collisionSystem:addEntity(player)
+
+    eventBus:on(EnemyManager.event.onAddEnemy, function(enemy)
+        collisionSystem:addEntity(enemy)
+    end)
+
+    eventBus:on(EnemyManager.event.onRemoveEnemy, function(enemy)
+        collisionSystem:removeEntity(enemy)
+    end)
 end
 
 function love.draw()

@@ -30,7 +30,6 @@ function Weapon:new(params)
 
     instance.currentLevel = 1
     instance.transform = Transform:new()
-    instance.sprite = nil -- will calculated based on the currentLevel
     instance.levelsSprite = {}
     instance.levelsAttack = {}
 

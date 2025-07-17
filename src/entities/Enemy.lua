@@ -10,6 +10,16 @@ local Enemy = {}
 Enemy.__index = Enemy
 Enemy.type = "enemy"
 
+Enemy.event = {
+    onDeadEvent = "on_enemy_dead",
+}
+
+Enemy.state = {
+    idle = "enemy_idle",
+    targeting = "enemy_targeting",
+    dead = "enemy_dead",
+}
+
 
 local STATE_TARGETING = "targeting"
 local STATE_IDLE      = "idle"
@@ -42,16 +52,13 @@ function Enemy:new(params)
 
     instance.params = Params.Merge(default, params)
     instance.components = {}
-    instance.callbacks = {
-        onDeadState = {},
-    }
     instance.target = {
         position = { x = nil, y = nil },
     }
     return instance
 end
 
-function Enemy:load(world)
+function Enemy:load(world, eventBus)
     local transform = Transform:new({
         x = self.params.x,
         y = self.params.y,
@@ -96,6 +103,7 @@ function Enemy:load(world)
 
     self.components = {
         sm = StateMachine:new(),
+        eventBus = eventBus,
         transform = transform,
         health = Health:new(self.params.maxHp),
         collider = collider,
@@ -119,21 +127,21 @@ end
 
 function Enemy:_loadStates()
     local sm = self.components.sm
-    sm:add_state(STATE_IDLE)
+    sm:add_state(Enemy.state.idle)
 
-    sm:add_state(STATE_TARGETING, {
+    sm:add_state(Enemy.state.targeting, {
         update = function(dt)
             self:_handleMovement(dt)
         end
     })
 
-    sm:add_state(STATE_DEAD, {
+    sm:add_state(Enemy.state.dead, {
         enter = function()
-            self:_notifyCallback(self.callbacks.onDeadState)
+            self:_notifyEvent(Enemy.event.onDeadEvent, self)
         end,
     })
 
-    sm:change_state(STATE_IDLE) -- Initial state
+    sm:change_state(Enemy.state.idle) -- Initial state
 end
 
 function Enemy:_handleState(dt)
@@ -141,7 +149,7 @@ function Enemy:_handleState(dt)
     sm:update(dt)
 
     if (self.components.health:get() <= 0) then
-        sm:change_state(STATE_DEAD)
+        sm:change_state(Enemy.state.dead)
     end
 end
 
@@ -162,16 +170,11 @@ function Enemy:_handleMovement(dt)
     end
 end
 
-function Enemy:_notifyCallback(callbacks, ...)
-    for _, callback in ipairs(callbacks) do
-        callback(...)
+function Enemy:_notifyEvent(event, ...)
+    if (self.components.eventBus) then
+        local eb = self.components.eventBus
+        eb:emit(event, ...)
     end
-end
-
----@param callback function
-function Enemy:onDeadState(callback)
-    local callbacks = self.callbacks.onDeadState
-    table.insert(callbacks, callback)
 end
 
 ---@param x number
@@ -179,13 +182,13 @@ end
 function Enemy:updateTargetPosition(x, y)
     self.target.position.x = x
     self.target.position.y = y
-    self.components.sm:change_state(STATE_TARGETING)
+    self.components.sm:change_state(Enemy.state.targeting)
 end
 
 function Enemy:clearTargetPosition()
     self.target.position.x = nil
     self.target.position.y = nil
-    self.components.sm:change_state(STATE_IDLE)
+    self.components.sm:change_state(Enemy.state.idle)
 end
 
 ---@param amount number
@@ -211,10 +214,6 @@ function Enemy:destroy()
             component:destroy()
         end
         component = nil
-    end
-
-    for _, callback in pairs(self.callbacks) do
-        callback = nil
     end
 end
 

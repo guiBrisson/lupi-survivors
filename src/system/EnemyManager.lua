@@ -3,25 +3,30 @@ local Enemy = require 'src.entities.Enemy'
 local EnemyManager = {}
 EnemyManager.__index = EnemyManager
 
+EnemyManager.event = {
+    onAddEnemy = "on_add_enemy",
+    onRemoveEnemy = "on_remove_enemy",
+}
+
 function EnemyManager:new()
     local instance = setmetatable({}, self)
-    instance.world = nil -- must be passed via load function
     instance.enemies = {}
     instance.deadEnemies = {}
+    instance.deadEnemiesCount = 0
     instance.target = {
         position = { x = nil, y = nil }
-    }
-    instance.callbacks = {
-        onAddEnemy = {},
-        onRemoveEnemy = {},
     }
     instance.spawnCooldown = 1
     instance.remaningSpawnCooldown = 0
     return instance
 end
 
-function EnemyManager:load(world)
+function EnemyManager:load(world, eventBus)
     self.world = world
+    self.eventBus = eventBus
+    self.eventBus:on(Enemy.event.onDeadEvent, function(enemy)
+        self:markForRemoval(enemy)
+    end)
 end
 
 function EnemyManager:update(dt)
@@ -52,7 +57,7 @@ end
 function EnemyManager:_addEnemy(enemy)
     table.insert(self.enemies, enemy)
 
-    self:_notifyCallback(self.callbacks.onAddEnemy, enemy)
+    self:_notifyEvent(EnemyManager.event.onAddEnemy, enemy)
 end
 
 ---@param enemy Enemy
@@ -61,16 +66,17 @@ function EnemyManager:_removeEnemy(enemy)
         if e == enemy then
             table.remove(self.enemies, i)
             e:destroy()
+            self.deadEnemiesCount = self.deadEnemiesCount + 1
             break
         end
     end
 
-    self:_notifyCallback(self.callbacks.onRemoveEnemy, enemy)
+    self:_notifyEvent(EnemyManager.event.onRemoveEnemy, enemy)
 end
 
-function EnemyManager:_notifyCallback(callbacks, ...)
-    for _, callback in ipairs(callbacks) do
-        callback(...)
+function EnemyManager:_notifyEvent(event, ...)
+    if (self.eventBus) then
+        self.eventBus:emit(event, ...)
     end
 end
 
@@ -82,57 +88,41 @@ function EnemyManager:_spawnEnemy(dt)
             local x, y = self:_generatePositionOutOfView()
             local enemy = Enemy:new({ x = x, y = y })
             self:_addEnemy(enemy)
-            enemy:load(self.world)
-            enemy:onDeadState(function()
-                self:markForRemoval(enemy)
-            end)
-
+            enemy:load(self.world, self.eventBus)
             self.remaningSpawnCooldown = self.spawnCooldown
         end
     end
 end
 
----@return x integer
----@return y integer
 function EnemyManager:_generatePositionOutOfView()
     local targetX = self.target.position.x or 0
     local targetY = self.target.position.y or 0
     local windowWidth = love.graphics.getWidth()
     local windowHeight = love.graphics.getHeight()
 
-    local side = math.random(1, 4) -- 1: left, 2: right, 3: top, 4: bottom
+    local LEFT = 1
+    local RIGHT = 2
+    local TOP = 3
+    local BOTTOM = 4
+    local side = math.random(LEFT, BOTTOM) --TODO: this is not random
     local offset = 100
     local x, y
 
-    if side == 1 then
-        -- Spawn on the left side, offset from the target's y position
+    if side == LEFT then
         x = targetX - (windowWidth / 2) - offset
         y = math.random(0, windowHeight)
-    elseif side == 2 then
-        -- Spawn on the right side, offset from the target's y position
+    elseif side == RIGHT then
         x = targetX + (windowWidth / 2) + offset
         y = math.random(0, windowHeight)
-    elseif side == 3 then
-        -- Spawn on the top side, offset from the target's x position
+    elseif side == TOP then
         x = math.random(0, windowWidth)
         y = targetY - (windowHeight / 2) - offset
-    else
-        -- Spawn on the bottom side, offset from the target's x position
+    elseif side == BOTTOM then
         x = math.random(0, windowWidth)
         y = targetY + (windowHeight / 2) + offset
     end
 
     return x, y
-end
-
-function EnemyManager:onAddEnemy(callback)
-    local callbacks = self.callbacks.onAddEnemy
-    table.insert(callbacks, callback)
-end
-
-function EnemyManager:onRemoveEnemy(callback)
-    local callbacks = self.callbacks.onRemoveEnemy
-    table.insert(callbacks, callback)
 end
 
 function EnemyManager:markForRemoval(enemy)
