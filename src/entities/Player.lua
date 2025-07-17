@@ -144,6 +144,8 @@ function Player:_handle_movement(dt)
     self.components.transform:setPosition(newX, newY)
 end
 
+---@return number
+---@return number
 function Player:getPosition()
     return self.components.transform:getWorldPosition()
 end

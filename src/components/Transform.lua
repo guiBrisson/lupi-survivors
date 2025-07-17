@@ -54,7 +54,8 @@ function Transform:setScale(sx, sy)
 end
 
 --- Get world position considering parent hierarchy
---- @return x number, y number
+---@return number
+---@return number
 function Transform:getWorldPosition()
     if self.params.parent then
         local parentX, parentY = self.params.parent:getWorldPosition()
