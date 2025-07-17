@@ -104,7 +104,8 @@ function EnemyManager:_generatePositionOutOfView()
     local RIGHT = 2
     local TOP = 3
     local BOTTOM = 4
-    local side = math.random(LEFT, BOTTOM) --TODO: this is not random
+    math.randomseed(os.time())
+    local side = math.random(LEFT, BOTTOM)
     local offset = 100
     local x, y
 
